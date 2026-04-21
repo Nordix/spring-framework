@@ -82,6 +82,7 @@ public class OpMultiply extends Operator {
 		Object rightOperand = getRightOperand().getValueInternal(state).getValue();
 
 		if (leftOperand instanceof Number && rightOperand instanceof Number) {
+			state.trackOperation();
 			Number leftNumber = (Number) leftOperand;
 			Number rightNumber = (Number) rightOperand;
 
@@ -118,6 +119,7 @@ public class OpMultiply extends Operator {
 		}
 
 		if (leftOperand instanceof String && rightOperand instanceof Integer) {
+			state.trackOperation();
 			String text = (String) leftOperand;
 			int count = (Integer) rightOperand;
 			int requestedSize = text.length() * count;

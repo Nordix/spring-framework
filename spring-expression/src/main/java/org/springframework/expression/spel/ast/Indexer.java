@@ -100,6 +100,11 @@ public class Indexer extends SpelNodeImpl {
 
 	@Override
 	public TypedValue getValueInternal(ExpressionState state) throws EvaluationException {
+		// Counts one operation per index read, not per element access. Upstream 6.2
+		// tracks inside each value-ref (array/list/map/string/custom), which requires
+		// porting the 6.2 IndexAccessor rewrite that is absent in 5.3.x. This coarser
+		// count still bounds indexing DoS.
+		state.trackOperation();
 		return getValueRef(state).getValue();
 	}
 
@@ -107,6 +112,8 @@ public class Indexer extends SpelNodeImpl {
 	public TypedValue setValueInternal(ExpressionState state, Supplier<TypedValue> valueSupplier)
 			throws EvaluationException {
 
+		// One operation per index write; see getValueInternal.
+		state.trackOperation();
 		TypedValue typedValue = valueSupplier.get();
 		getValueRef(state).setValue(typedValue.getValue());
 		return typedValue;

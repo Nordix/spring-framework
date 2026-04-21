@@ -66,6 +66,7 @@ public class OpDec extends Operator {
 		TypedValue newValue = null;
 
 		if (operandValue instanceof Number) {
+			state.trackOperation();
 			Number op1 = (Number) operandValue;
 			if (op1 instanceof BigDecimal) {
 				newValue = new TypedValue(((BigDecimal) op1).subtract(BigDecimal.ONE), operandTypedValue.getTypeDescriptor());
@@ -113,8 +114,9 @@ public class OpDec extends Operator {
 			}
 		}
 
-		// set the new value
+		state.trackOperation();
 		try {
+			// set the new value
 			lvalue.setValue(newValue.getValue());
 		}
 		catch (SpelEvaluationException see) {
