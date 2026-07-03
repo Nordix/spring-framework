@@ -27,7 +27,7 @@ runs:
       shell: bash
       run: |
         mkdir -p $HOME/.gradle
-        echo 'systemProp.user.name=spring-builds+github' >> $HOME/.gradle/gradle.properties
+        echo 'systemProp.user.name=nordix-builds+github' >> $HOME/.gradle/gradle.properties
         echo 'systemProp.org.gradle.internal.launcher.welcomeMessageEnabled=false' >> $HOME/.gradle/gradle.properties
         echo 'org.gradle.daemon=false' >> $HOME/.gradle/gradle.properties
     - name: Configure Toolchain Properties
