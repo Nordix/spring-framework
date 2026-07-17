@@ -2,7 +2,7 @@ name: Build and Deploy Snapshot
 on:
   push:
     branches:
-      - 'v5.3.[0-9]+-est[-]?[0-9]*'
+      - 'v5.3.39-est-[0-9]'
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
 jobs:
