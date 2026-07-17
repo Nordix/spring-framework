@@ -9,6 +9,10 @@ inputs:
     required: false
     default: 'false'
     description: 'Whether a Java toolchain should be used'
+  publish:
+    required: false
+    default: 'false'
+    description: 'Whether to publish artifacts ready for deployment to Artifactory'
 
 outputs:
   version:
@@ -24,8 +28,14 @@ runs:
         java-toolchain: ${{ inputs.java-toolchain }}
     - name: Build
       id: build
+      if: ${{ inputs.publish == 'false' }}
       shell: bash
       run: ./gradlew check
+    - name: Publish
+      id: publish
+      if: ${{ inputs.publish == 'true' }}
+      shell: bash
+      run: ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository build publishAllPublicationsToDeploymentRepository
     - name: Read Version From gradle.properties
       id: read-version
       shell: bash
