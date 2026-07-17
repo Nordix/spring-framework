@@ -382,7 +382,8 @@ configure([rootProject] + javaProjects) { project ->
 			"https://www.javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/2.12.7/",
 			"https://www.javadoc.io/doc/com.fasterxml.jackson.dataformat/jackson-dataformat-xml/2.12.7/",
 			"https://hc.apache.org/httpcomponents-client-5.1.x/current/httpclient5/apidocs/",
-			"https://projectreactor.io/docs/test/release/api/",
+            // Temporarily commenting out Project Reactor since javadoc on JDK 8 cannot access it.
+            // "https://projectreactor.io/docs/test/release/api/",
 			"https://junit.org/junit4/javadoc/4.13.2/",
 			// Disabling linking to JUnit 5.8.2, since the `package-list` file no longer exists due to
 			// https://github.com/junit-team/junit5/commit/67ad4e545518b0ce2b0e7c96df31a669866d5003.
