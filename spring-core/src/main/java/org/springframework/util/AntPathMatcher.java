@@ -782,11 +782,6 @@ public class AntPathMatcher implements PathMatcher {
 			}
 
 			@Override
-			public boolean isEmpty() {
-				return this.text.isEmpty();
-			}
-
-			@Override
 			public CharSequence subSequence(int start, int end) {
 				return new MaxAttemptsCharSequence(this.text.substring(start, end), this.counter);
 			}
