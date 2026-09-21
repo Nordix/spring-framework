@@ -1,0 +1,72 @@
+name: Generate VEX Documents
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to generate VEX for (leave empty to auto-detect latest -est tag)"
+        required: false
+      upstream_url:
+        description: "Upstream repo URL (leave empty for auto-detect)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  generate-vex:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Determine release tag
+        if: github.event_name != 'push'
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "release_tag=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_tag=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate CSAF VEX
+        run: |
+          ARGS=(. --output-dir vex-output --per-cve)
+
+          TAG="${{ steps.tag.outputs.release_tag }}"
+          if [ -n "$TAG" ]; then
+            ARGS+=(--release-tag "$TAG")
+          fi
+
+          if [ -n "${{ github.event.inputs.upstream_url }}" ]; then
+            ARGS+=(--upstream-url "${{ github.event.inputs.upstream_url }}")
+          fi
+
+          chmod +x .github/scripts/git-csaf-vex-gen-ci.sh
+          .github/scripts/git-csaf-vex-gen-ci.sh "${ARGS[@]}"
+
+      - name: Upload VEX as release assets
+        if: github.event_name == 'release'
+        run: |
+          TAG="${{ steps.tag.outputs.release_tag }}"
+          if [ -f "vex-output/combined.csaf.json" ]; then
+            gh release upload "$TAG" \
+              "vex-output/combined.csaf.json#VEX (CSAF 2.0)" \
+              --clobber \
+              --repo "${{ github.repository }}"
+          fi
+
+      - name: Upload VEX as workflow artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: vex-documents
+          path: vex-output/
+          retention-days: 90
