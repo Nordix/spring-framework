@@ -24,13 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Out Release Verification Tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           repository: spring-projects/spring-framework-release-verification
           ref: 'v0.0.2'
           token: ${{ secrets.token }}
       - name: Check Out Send Notification Action
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           path: spring-framework
           sparse-checkout: .github/actions/send-notification
