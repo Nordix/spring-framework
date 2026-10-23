@@ -3,6 +3,10 @@ apply plugin: "maven-publish"
 publishing {
 	publications {
 		mavenJava(MavenPublication) {
+			// Publish artifacts under a dedicated groupId while the build's internal
+			// `group` (org.springframework) is left untouched so project dependency
+			// resolution, version management, and the BOM behave as normal.
+			groupId = project.findProperty("publishGroupId") ?: "org.nordix"
 			pom {
 				afterEvaluate {
 					name = project.description
