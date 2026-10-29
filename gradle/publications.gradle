@@ -62,6 +62,16 @@ void configureDeploymentRepository(Project project) {
 			publishing.repositories.maven {
 				it.url = project.property("deploymentRepository")
 				it.name = "deployment"
+				// Optional credentials for publishing directly to an authenticated
+				// remote repository (e.g. the Central Portal snapshots repo). When no
+				// username is provided the repository is used without credentials,
+				// preserving the local-folder release flow.
+				if (project.hasProperty("deploymentRepositoryUsername")) {
+					it.credentials {
+						it.username = project.property("deploymentRepositoryUsername")
+						it.password = project.findProperty("deploymentRepositoryPassword")
+					}
+				}
 			}
 		}
 	}
