@@ -23,7 +23,7 @@ tasks.findByName("dokkaHtmlPartial")?.configure {
 				url.set(new URL("https://javadoc.io/doc/javax.servlet/javax.servlet-api/latest/"))
 			}
 			externalDocumentationLink {
-				url.set(new URL("https://javadoc.io/static/io.rsocket/rsocket-core/1.1.1/"))
+				url.set(new URL("https://javadoc.io/static/io.rsocket/rsocket-core/1.1.5/"))
 			}
 		}
 	}
