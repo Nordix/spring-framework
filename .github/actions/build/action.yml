@@ -13,6 +13,10 @@ inputs:
     required: false
     default: 'false'
     description: 'Whether to publish artifacts ready for deployment to Artifactory'
+  publish-group-id:
+    required: false
+    default: 'org.nordix'
+    description: 'Overrides the groupId used for published artifacts (passed as -PpublishGroupId). When empty, the build default is used.'
 
 outputs:
   version:
@@ -35,7 +39,14 @@ runs:
       id: publish
       if: ${{ inputs.publish == 'true' }}
       shell: bash
-      run: ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository build publishAllPublicationsToDeploymentRepository
+      env:
+        PUBLISH_GROUP_ID: ${{ inputs.publish-group-id }}
+      run: |
+        args=()
+        if [ -n "${PUBLISH_GROUP_ID}" ]; then
+          args+=("-PpublishGroupId=${PUBLISH_GROUP_ID}")
+        fi
+        ./gradlew -PdeploymentRepository=$(pwd)/deployment-repository "${args[@]}" build publishAllPublicationsToDeploymentRepository
     - name: Read Version From gradle.properties
       id: read-version
       shell: bash

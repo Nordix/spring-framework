@@ -1,0 +1,92 @@
+name: Sync to Maven Central Portal
+description: GPG-signs a local Maven deployment repository and uploads it to the Sonatype Central Portal
+
+inputs:
+  deployment-repository:
+    description: 'Path to the local Maven repository produced by the build (the deployment-repository folder)'
+    required: true
+  publishing-type:
+    description: 'Central Portal publishing type: USER_MANAGED (stage for manual release) or AUTOMATIC'
+    required: false
+    default: 'USER_MANAGED'
+  gpg-private-key:
+    description: 'ASCII-armored GPG private key used to sign artifacts'
+    required: true
+  gpg-passphrase:
+    description: 'Passphrase for the GPG private key'
+    required: true
+  central-token:
+    description: 'Central Portal token, base64("username:password"), used as the Authorization Bearer value'
+    required: true
+
+outputs:
+  deployment-id:
+    description: 'The deployment ID returned by the Central Portal upload API'
+    value: ${{ steps.upload.outputs.deployment-id }}
+
+runs:
+  using: composite
+  steps:
+    - name: Import GPG Key
+      shell: bash
+      env:
+        GPG_PRIVATE_KEY: ${{ inputs.gpg-private-key }}
+      run: |
+        echo "${GPG_PRIVATE_KEY}" | gpg --batch --import
+        KEY_ID=$(gpg --list-secret-keys --with-colons | awk -F: '/^sec:/ {print $5; exit}')
+        echo "Imported GPG key: ${KEY_ID}"
+
+    - name: Sign Artifacts
+      shell: bash
+      env:
+        GPG_PASSPHRASE: ${{ inputs.gpg-passphrase }}
+        DEPLOYMENT_REPOSITORY: ${{ inputs.deployment-repository }}
+      run: |
+        set -euo pipefail
+        find "${DEPLOYMENT_REPOSITORY}" -type f \
+          \( -name '*.jar' -o -name '*.pom' -o -name '*.module' -o -name '*.zip' \) \
+          -print0 | while IFS= read -r -d '' file; do
+            gpg --batch --yes --pinentry-mode loopback \
+              --passphrase "${GPG_PASSPHRASE}" \
+              --detach-sign --armor "${file}"
+          done
+
+    - name: Generate Checksums
+      shell: bash
+      env:
+        DEPLOYMENT_REPOSITORY: ${{ inputs.deployment-repository }}
+      run: |
+        set -euo pipefail
+        find "${DEPLOYMENT_REPOSITORY}" -type f \
+          ! -name '*.md5' ! -name '*.sha1' ! -name '*.sha256' ! -name '*.sha512' \
+          -print0 | while IFS= read -r -d '' file; do
+            md5sum "${file}"  | awk '{print $1}' > "${file}.md5"
+            sha1sum "${file}" | awk '{print $1}' > "${file}.sha1"
+          done
+
+    - name: Create Upload Bundle
+      shell: bash
+      env:
+        DEPLOYMENT_REPOSITORY: ${{ inputs.deployment-repository }}
+      run: |
+        set -euo pipefail
+        ( cd "${DEPLOYMENT_REPOSITORY}" && zip -qr "${RUNNER_TEMP}/central-bundle.zip" . )
+        echo "Bundle contents:"
+        unzip -l "${RUNNER_TEMP}/central-bundle.zip" | head -n 40
+
+    - name: Upload to Central Portal
+      id: upload
+      shell: bash
+      env:
+        CENTRAL_TOKEN: ${{ inputs.central-token }}
+        PUBLISHING_TYPE: ${{ inputs.publishing-type }}
+      run: |
+        set -euo pipefail
+        # central-token is base64("username:password"), used directly as the bearer value.
+        response=$(curl --fail-with-body --silent --show-error \
+          --request POST \
+          --header "Authorization: Bearer ${CENTRAL_TOKEN}" \
+          --form "bundle=@${RUNNER_TEMP}/central-bundle.zip" \
+          "https://central.sonatype.com/api/v1/publisher/upload?publishingType=${PUBLISHING_TYPE}")
+        echo "Deployment ID: ${response}"
+        echo "deployment-id=${response}" >> "$GITHUB_OUTPUT"
